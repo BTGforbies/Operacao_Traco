@@ -1,0 +1,274 @@
+@import "tailwindcss";
+
+:root {
+  --background: #090a0c;
+  --foreground: #f4f4f5;
+  color-scheme: dark;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  background: var(--background);
+}
+
+body {
+  margin: 0;
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+button,
+a,
+input,
+select,
+textarea {
+  outline-color: #0069fe;
+  outline-offset: 2px;
+}
+
+button {
+  cursor: pointer;
+}
+
+::selection {
+  background: rgba(0, 105, 254, 0.18);
+}
+
+.app-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #3f3f46 transparent;
+}
+
+.app-scrollbar::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+
+.app-scrollbar::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: #3f3f46;
+}
+
+.app-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.dark [class~="bg-[#f4f7fb]"] {
+  background-color: #090a0c;
+}
+
+.dark [class~="bg-[#f7f9fc]"] {
+  background-color: #0d0e10;
+}
+
+.dark [class~="bg-[#00113B]"] {
+  background-color: #0b0c0e;
+}
+
+.dark [class~="bg-[#00113B]/40"],
+.dark [class~="bg-[#00113B]/45"] {
+  background-color: rgb(0 0 0 / 0.64);
+}
+
+.dark .bg-white {
+  background-color: #151619;
+}
+
+.dark [class~="bg-white/90"],
+.dark [class~="bg-white/95"] {
+  background-color: rgb(17 18 20 / 0.94);
+}
+
+.dark .bg-slate-50 {
+  background-color: #111214;
+}
+
+.dark [class~="bg-slate-50/60"],
+.dark [class~="bg-slate-50/70"],
+.dark [class~="bg-slate-100/70"] {
+  background-color: rgb(17 18 20 / 0.82);
+}
+
+.dark .bg-slate-100,
+.dark .bg-slate-200 {
+  background-color: #1d1e21;
+}
+
+.dark .bg-blue-50 {
+  background-color: #18191c;
+}
+
+.dark .bg-blue-100 {
+  background-color: #202124;
+}
+
+.dark [class~="bg-blue-50/70"] {
+  background-color: rgb(24 25 28 / 0.82);
+}
+
+.dark .bg-amber-50,
+.dark .bg-amber-100 {
+  background-color: rgb(245 158 11 / 0.13);
+}
+
+.dark .bg-emerald-50,
+.dark .bg-emerald-100 {
+  background-color: rgb(16 185 129 / 0.13);
+}
+
+.dark .bg-rose-50,
+.dark .bg-rose-100 {
+  background-color: rgb(244 63 94 / 0.13);
+}
+
+.dark .bg-orange-50,
+.dark .bg-orange-100 {
+  background-color: rgb(249 115 22 / 0.13);
+}
+
+.dark .border-slate-100,
+.dark .border-slate-200,
+.dark .border-slate-300,
+.dark [class~="border-slate-200/80"] {
+  border-color: rgb(63 63 70 / 0.74);
+}
+
+.dark [class~="divide-slate-100"] > :not(:last-child) {
+  border-color: rgb(39 39 42 / 0.92);
+}
+
+.dark [class~="text-[#00113B]"] {
+  color: #f8fafc;
+}
+
+.dark [class~="text-[#14213d]"] {
+  color: #f4f4f5;
+}
+
+.dark .text-slate-700 {
+  color: #e4e4e7;
+}
+
+.dark .text-slate-600 {
+  color: #d4d4d8;
+}
+
+.dark .text-slate-500 {
+  color: #a1a1aa;
+}
+
+.dark .text-slate-400 {
+  color: #71717a;
+}
+
+.dark .text-slate-300 {
+  color: #a1a1aa;
+}
+
+.dark [class~="text-blue-50/70"],
+.dark [class~="text-blue-100/60"],
+.dark [class~="text-blue-100/55"],
+.dark [class~="text-blue-100/50"],
+.dark [class~="text-blue-100/45"],
+.dark [class~="text-blue-100/40"] {
+  color: #a1a1aa;
+}
+
+.dark .text-blue-700 {
+  color: #93c5fd;
+}
+
+.dark .text-amber-700,
+.dark .text-amber-800 {
+  color: #fcd34d;
+}
+
+.dark .text-emerald-700 {
+  color: #6ee7b7;
+}
+
+.dark .text-rose-700,
+.dark .text-rose-800 {
+  color: #fda4af;
+}
+
+.dark .text-orange-600,
+.dark .text-orange-700 {
+  color: #fdba74;
+}
+
+.dark [class~="hover:bg-slate-50"]:hover,
+.dark [class~="hover:bg-slate-100"]:hover,
+.dark [class~="hover:bg-slate-50/70"]:hover,
+.dark [class~="hover:bg-blue-50"]:hover,
+.dark [class~="focus:bg-white"]:focus {
+  background-color: #202124;
+}
+
+.dark [class~="hover:border-slate-300"]:hover,
+.dark [class~="hover:border-blue-200"]:hover {
+  border-color: #52525b;
+}
+
+.dark aside nav [class~="bg-white"] {
+  background-color: #f4f4f5;
+}
+
+.dark aside nav [class~="bg-white"][class~="text-[#00113B]"] {
+  color: #090a0c;
+}
+
+.dark input,
+.dark textarea,
+.dark select {
+  caret-color: #60a5fa;
+}
+
+.dark select option {
+  background: #151619;
+  color: #f4f4f5;
+}
+
+@keyframes app-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.app-enter {
+  animation: app-enter 220ms ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
