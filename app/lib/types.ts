@@ -1,6 +1,9 @@
 export type Role = "owner" | "manager" | "collaborator";
 export type TaskStatus = "pending" | "in_progress" | "review" | "completed";
 export type Priority = "low" | "normal" | "high" | "urgent";
+export type OpportunityStage = "lead" | "contacted" | "meeting" | "proposal" | "negotiation" | "won" | "lost";
+export type MeetingStatus = "scheduled" | "completed" | "canceled";
+export type ContractStatus = "draft" | "sent" | "signed" | "active" | "expiring" | "ended" | "canceled";
 
 export type AppUser = {
   id: string;
@@ -35,6 +38,65 @@ export type Team = {
   description: string | null;
   color: string;
   created_at: string;
+};
+
+export type SalesOpportunity = {
+  id: string;
+  workspace_id: string;
+  company_name: string;
+  contact_name: string | null;
+  contact_email: string | null;
+  contact_phone: string | null;
+  service: string;
+  estimated_value: number;
+  stage: OpportunityStage;
+  owner_id: string;
+  next_action_at: string | null;
+  notes: string;
+  loss_reason: string | null;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+};
+
+export type SalesMeeting = {
+  id: string;
+  workspace_id: string;
+  opportunity_id: string | null;
+  title: string;
+  company_name: string;
+  starts_at: string;
+  duration_minutes: number;
+  meeting_type: "online" | "presential" | "phone";
+  location: string | null;
+  participants: string;
+  agenda: string;
+  outcome: string;
+  status: MeetingStatus;
+  responsible_id: string;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+};
+
+export type SalesContract = {
+  id: string;
+  workspace_id: string;
+  opportunity_id: string | null;
+  client_id: string | null;
+  company_name: string;
+  title: string;
+  value: number;
+  billing_cycle: "one_time" | "monthly" | "quarterly" | "annual";
+  start_date: string | null;
+  end_date: string | null;
+  status: ContractStatus;
+  document_url: string | null;
+  notes: string;
+  owner_id: string;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
 };
 
 export type Task = {
@@ -125,6 +187,9 @@ export type AppData = {
   teams: Team[];
   tasks: Task[];
   routines: Routine[];
+  salesOpportunities: SalesOpportunity[];
+  salesMeetings: SalesMeeting[];
+  salesContracts: SalesContract[];
   teamMembers: Pair[];
   clientTeams: Pair[];
   taskAssignees: Pair[];

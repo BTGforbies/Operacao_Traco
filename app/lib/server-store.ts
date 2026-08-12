@@ -6,6 +6,9 @@ import type {
   Notification,
   Pair,
   Routine,
+  SalesContract,
+  SalesMeeting,
+  SalesOpportunity,
   Task,
   TaskComment,
   TaskEvent,
@@ -543,6 +546,9 @@ export async function getAppData(user: AppUser): Promise<AppData> {
     teams,
     allTasks,
     routines,
+    salesOpportunities,
+    salesMeetings,
+    salesContracts,
     rawTeamMembers,
     rawClientTeams,
     rawTaskAssignees,
@@ -559,6 +565,9 @@ export async function getAppData(user: AppUser): Promise<AppData> {
     rows<Team>(db.prepare("SELECT * FROM teams WHERE workspace_id = ? ORDER BY name").bind(WORKSPACE_ID)),
     rows<Task>(db.prepare("SELECT * FROM tasks WHERE workspace_id = ? ORDER BY due_at, created_at DESC").bind(WORKSPACE_ID)),
     rows<Routine>(db.prepare("SELECT * FROM routines WHERE workspace_id = ? ORDER BY active DESC, next_run_at").bind(WORKSPACE_ID)),
+    rows<SalesOpportunity>(db.prepare("SELECT * FROM sales_opportunities WHERE workspace_id = ? ORDER BY updated_at DESC").bind(WORKSPACE_ID)),
+    rows<SalesMeeting>(db.prepare("SELECT * FROM sales_meetings WHERE workspace_id = ? ORDER BY starts_at").bind(WORKSPACE_ID)),
+    rows<SalesContract>(db.prepare("SELECT * FROM sales_contracts WHERE workspace_id = ? ORDER BY updated_at DESC").bind(WORKSPACE_ID)),
     rows<{ team_id: string; user_id: string }>(db.prepare("SELECT team_id, user_id FROM team_members")),
     rows<{ client_id: string; team_id: string }>(db.prepare("SELECT client_id, team_id FROM client_teams")),
     rows<{ task_id: string; user_id: string }>(db.prepare("SELECT task_id, user_id FROM task_assignees")),
@@ -605,6 +614,24 @@ export async function getAppData(user: AppUser): Promise<AppData> {
   const visibleRoutines = managed
     ? routines
     : routines.filter((routine) => clientIds.has(routine.client_id));
+  const visibleOpportunities = managed
+    ? salesOpportunities
+    : salesOpportunities.filter((opportunity) => opportunity.owner_id === user.id);
+  const visibleOpportunityIds = new Set(visibleOpportunities.map((item) => item.id));
+  const visibleMeetings = managed
+    ? salesMeetings
+    : salesMeetings.filter(
+        (meeting) =>
+          meeting.responsible_id === user.id ||
+          Boolean(meeting.opportunity_id && visibleOpportunityIds.has(meeting.opportunity_id)),
+      );
+  const visibleContracts = managed
+    ? salesContracts
+    : salesContracts.filter(
+        (contract) =>
+          contract.owner_id === user.id ||
+          Boolean(contract.opportunity_id && visibleOpportunityIds.has(contract.opportunity_id)),
+      );
 
   const pair = (leftId: string, rightId: string): Pair => ({
     left_id: leftId,
@@ -618,6 +645,9 @@ export async function getAppData(user: AppUser): Promise<AppData> {
     teams: managed ? teams : teams.filter((team) => memberTeamIds.has(team.id)),
     tasks: visibleTasks,
     routines: visibleRoutines,
+    salesOpportunities: visibleOpportunities,
+    salesMeetings: visibleMeetings,
+    salesContracts: visibleContracts,
     teamMembers: rawTeamMembers.map((item) => pair(item.team_id, item.user_id)),
     clientTeams: rawClientTeams.map((item) => pair(item.client_id, item.team_id)),
     taskAssignees: rawTaskAssignees

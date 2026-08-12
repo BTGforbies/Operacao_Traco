@@ -33,6 +33,14 @@ function integer(value: unknown, fallback = 0): number {
   return Number.isFinite(parsed) ? Math.trunc(parsed) : fallback;
 }
 
+function moneyToCents(value: unknown): number {
+  if (typeof value === "number") return Math.max(0, Math.round(value * 100));
+  if (typeof value !== "string") return 0;
+  const normalized = value.replace(/\s/g, "").replace(/\./g, "").replace(",", ".");
+  const parsed = Number(normalized);
+  return Number.isFinite(parsed) ? Math.max(0, Math.round(parsed * 100)) : 0;
+}
+
 function nameFromEmail(email: string): string {
   const localPart = email.split("@")[0] || "Colaborador";
   return localPart
@@ -652,6 +660,181 @@ async function toggleRoutine(payload: Payload, user: AppUser) {
   return { id, active };
 }
 
+async function saveOpportunity(payload: Payload, user: AppUser) {
+  if (!canManage(user)) throw new Error("Somente gestores podem alterar o comercial.");
+  const id = text(payload.id, 100) || createId("opportunity");
+  const companyName = text(payload.companyName, 160);
+  const ownerId = text(payload.ownerId, 100);
+  const stage = text(payload.stage, 30);
+  const validStages = ["lead", "contacted", "meeting", "proposal", "negotiation", "won", "lost"];
+  if (!companyName || !ownerId || !validStages.includes(stage)) {
+    throw new Error("Preencha empresa, responsável e etapa da oportunidade.");
+  }
+  const db = getD1();
+  const timestamp = nowIso();
+  const existing = await db
+    .prepare("SELECT id FROM sales_opportunities WHERE id = ? AND workspace_id = ? LIMIT 1")
+    .bind(id, WORKSPACE_ID)
+    .first<{ id: string }>();
+  const values = [
+    companyName,
+    text(payload.contactName, 120) || null,
+    text(payload.contactEmail, 180) || null,
+    text(payload.contactPhone, 40) || null,
+    text(payload.service, 180),
+    moneyToCents(payload.estimatedValue),
+    stage,
+    ownerId,
+    text(payload.nextActionAt, 10) || null,
+    text(payload.notes),
+    stage === "lost" ? text(payload.lossReason, 500) || null : null,
+  ] as const;
+  if (existing) {
+    await db
+      .prepare(
+        `UPDATE sales_opportunities SET company_name = ?, contact_name = ?, contact_email = ?,
+         contact_phone = ?, service = ?, estimated_value = ?, stage = ?, owner_id = ?,
+         next_action_at = ?, notes = ?, loss_reason = ?, updated_at = ?
+         WHERE id = ? AND workspace_id = ?`,
+      )
+      .bind(...values, timestamp, id, WORKSPACE_ID)
+      .run();
+  } else {
+    await db
+      .prepare(
+        `INSERT INTO sales_opportunities
+         (id, workspace_id, company_name, contact_name, contact_email, contact_phone,
+          service, estimated_value, stage, owner_id, next_action_at, notes, loss_reason,
+          created_by, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      )
+      .bind(id, WORKSPACE_ID, ...values, user.id, timestamp, timestamp)
+      .run();
+  }
+  return { id };
+}
+
+async function saveMeeting(payload: Payload, user: AppUser) {
+  if (!canManage(user)) throw new Error("Somente gestores podem alterar reuniões comerciais.");
+  const id = text(payload.id, 100) || createId("meeting");
+  const title = text(payload.title, 180);
+  const companyName = text(payload.companyName, 160);
+  const startsAt = text(payload.startsAt, 30);
+  const responsibleId = text(payload.responsibleId, 100);
+  const status = text(payload.status, 20);
+  const meetingType = text(payload.meetingType, 20);
+  if (!title || !companyName || !startsAt || !responsibleId) {
+    throw new Error("Preencha título, empresa, data e responsável pela reunião.");
+  }
+  if (!["scheduled", "completed", "canceled"].includes(status)) {
+    throw new Error("Status de reunião inválido.");
+  }
+  const db = getD1();
+  const timestamp = nowIso();
+  const existing = await db
+    .prepare("SELECT id FROM sales_meetings WHERE id = ? AND workspace_id = ? LIMIT 1")
+    .bind(id, WORKSPACE_ID)
+    .first<{ id: string }>();
+  const values = [
+    text(payload.opportunityId, 100) || null,
+    title,
+    companyName,
+    startsAt,
+    Math.min(480, Math.max(15, integer(payload.durationMinutes, 60))),
+    ["online", "presential", "phone"].includes(meetingType) ? meetingType : "online",
+    text(payload.location, 500) || null,
+    text(payload.participants, 1000),
+    text(payload.agenda),
+    text(payload.outcome),
+    status,
+    responsibleId,
+  ] as const;
+  if (existing) {
+    await db
+      .prepare(
+        `UPDATE sales_meetings SET opportunity_id = ?, title = ?, company_name = ?, starts_at = ?,
+         duration_minutes = ?, meeting_type = ?, location = ?, participants = ?, agenda = ?,
+         outcome = ?, status = ?, responsible_id = ?, updated_at = ?
+         WHERE id = ? AND workspace_id = ?`,
+      )
+      .bind(...values, timestamp, id, WORKSPACE_ID)
+      .run();
+  } else {
+    await db
+      .prepare(
+        `INSERT INTO sales_meetings
+         (id, workspace_id, opportunity_id, title, company_name, starts_at, duration_minutes,
+          meeting_type, location, participants, agenda, outcome, status, responsible_id,
+          created_by, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      )
+      .bind(id, WORKSPACE_ID, ...values, user.id, timestamp, timestamp)
+      .run();
+  }
+  return { id };
+}
+
+async function saveContract(payload: Payload, user: AppUser) {
+  if (!canManage(user)) throw new Error("Somente gestores podem alterar contratos.");
+  const id = text(payload.id, 100) || createId("contract");
+  const title = text(payload.title, 180);
+  const companyName = text(payload.companyName, 160);
+  const ownerId = text(payload.ownerId, 100);
+  const status = text(payload.status, 20);
+  const billingCycle = text(payload.billingCycle, 20);
+  const validStatuses = ["draft", "sent", "signed", "active", "expiring", "ended", "canceled"];
+  if (!title || !companyName || !ownerId || !validStatuses.includes(status)) {
+    throw new Error("Preencha contrato, empresa, responsável e status.");
+  }
+  const documentUrl = text(payload.documentUrl, 1000);
+  if (documentUrl && !/^https?:\/\//i.test(documentUrl)) {
+    throw new Error("O link do contrato deve começar com http:// ou https://.");
+  }
+  const db = getD1();
+  const timestamp = nowIso();
+  const existing = await db
+    .prepare("SELECT id FROM sales_contracts WHERE id = ? AND workspace_id = ? LIMIT 1")
+    .bind(id, WORKSPACE_ID)
+    .first<{ id: string }>();
+  const values = [
+    text(payload.opportunityId, 100) || null,
+    text(payload.clientId, 100) || null,
+    companyName,
+    title,
+    moneyToCents(payload.value),
+    ["one_time", "monthly", "quarterly", "annual"].includes(billingCycle) ? billingCycle : "monthly",
+    text(payload.startDate, 10) || null,
+    text(payload.endDate, 10) || null,
+    status,
+    documentUrl || null,
+    text(payload.notes),
+    ownerId,
+  ] as const;
+  if (existing) {
+    await db
+      .prepare(
+        `UPDATE sales_contracts SET opportunity_id = ?, client_id = ?, company_name = ?,
+         title = ?, value = ?, billing_cycle = ?, start_date = ?, end_date = ?, status = ?,
+         document_url = ?, notes = ?, owner_id = ?, updated_at = ?
+         WHERE id = ? AND workspace_id = ?`,
+      )
+      .bind(...values, timestamp, id, WORKSPACE_ID)
+      .run();
+  } else {
+    await db
+      .prepare(
+        `INSERT INTO sales_contracts
+         (id, workspace_id, opportunity_id, client_id, company_name, title, value,
+          billing_cycle, start_date, end_date, status, document_url, notes, owner_id,
+          created_by, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      )
+      .bind(id, WORKSPACE_ID, ...values, user.id, timestamp, timestamp)
+      .run();
+  }
+  return { id };
+}
+
 async function markNotificationsRead(user: AppUser) {
   await getD1()
     .prepare("UPDATE notifications SET read_at = ? WHERE user_id = ? AND read_at IS NULL")
@@ -711,6 +894,15 @@ export async function POST(request: Request) {
         break;
       case "toggle_routine":
         result = await toggleRoutine(payload, user);
+        break;
+      case "save_opportunity":
+        result = await saveOpportunity(payload, user);
+        break;
+      case "save_sales_meeting":
+        result = await saveMeeting(payload, user);
+        break;
+      case "save_contract":
+        result = await saveContract(payload, user);
         break;
       case "mark_notifications_read":
         result = await markNotificationsRead(user);

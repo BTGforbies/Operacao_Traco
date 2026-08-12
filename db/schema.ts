@@ -101,6 +101,122 @@ export const clientTeams = sqliteTable(
   (table) => [primaryKey({ columns: [table.clientId, table.teamId] })],
 );
 
+export const salesOpportunities = sqliteTable(
+  "sales_opportunities",
+  {
+    id: text("id").primaryKey(),
+    workspaceId: text("workspace_id")
+      .notNull()
+      .references(() => workspaces.id),
+    companyName: text("company_name").notNull(),
+    contactName: text("contact_name"),
+    contactEmail: text("contact_email"),
+    contactPhone: text("contact_phone"),
+    service: text("service").notNull().default(""),
+    estimatedValue: integer("estimated_value").notNull().default(0),
+    stage: text("stage").notNull().default("lead"),
+    ownerId: text("owner_id")
+      .notNull()
+      .references(() => users.id),
+    nextActionAt: text("next_action_at"),
+    notes: text("notes").notNull().default(""),
+    lossReason: text("loss_reason"),
+    createdBy: text("created_by")
+      .notNull()
+      .references(() => users.id),
+    createdAt: text("created_at").notNull(),
+    updatedAt: text("updated_at").notNull(),
+  },
+  (table) => [
+    index("sales_opportunities_stage_idx").on(
+      table.workspaceId,
+      table.stage,
+      table.nextActionAt,
+    ),
+    index("sales_opportunities_owner_idx").on(table.ownerId, table.stage),
+  ],
+);
+
+export const salesMeetings = sqliteTable(
+  "sales_meetings",
+  {
+    id: text("id").primaryKey(),
+    workspaceId: text("workspace_id")
+      .notNull()
+      .references(() => workspaces.id),
+    opportunityId: text("opportunity_id").references(() => salesOpportunities.id, {
+      onDelete: "set null",
+    }),
+    title: text("title").notNull(),
+    companyName: text("company_name").notNull(),
+    startsAt: text("starts_at").notNull(),
+    durationMinutes: integer("duration_minutes").notNull().default(60),
+    meetingType: text("meeting_type").notNull().default("online"),
+    location: text("location"),
+    participants: text("participants").notNull().default(""),
+    agenda: text("agenda").notNull().default(""),
+    outcome: text("outcome").notNull().default(""),
+    status: text("status").notNull().default("scheduled"),
+    responsibleId: text("responsible_id")
+      .notNull()
+      .references(() => users.id),
+    createdBy: text("created_by")
+      .notNull()
+      .references(() => users.id),
+    createdAt: text("created_at").notNull(),
+    updatedAt: text("updated_at").notNull(),
+  },
+  (table) => [
+    index("sales_meetings_schedule_idx").on(
+      table.workspaceId,
+      table.status,
+      table.startsAt,
+    ),
+    index("sales_meetings_responsible_idx").on(table.responsibleId, table.startsAt),
+  ],
+);
+
+export const salesContracts = sqliteTable(
+  "sales_contracts",
+  {
+    id: text("id").primaryKey(),
+    workspaceId: text("workspace_id")
+      .notNull()
+      .references(() => workspaces.id),
+    opportunityId: text("opportunity_id").references(() => salesOpportunities.id, {
+      onDelete: "set null",
+    }),
+    clientId: text("client_id").references(() => clients.id, {
+      onDelete: "set null",
+    }),
+    companyName: text("company_name").notNull(),
+    title: text("title").notNull(),
+    value: integer("value").notNull().default(0),
+    billingCycle: text("billing_cycle").notNull().default("monthly"),
+    startDate: text("start_date"),
+    endDate: text("end_date"),
+    status: text("status").notNull().default("draft"),
+    documentUrl: text("document_url"),
+    notes: text("notes").notNull().default(""),
+    ownerId: text("owner_id")
+      .notNull()
+      .references(() => users.id),
+    createdBy: text("created_by")
+      .notNull()
+      .references(() => users.id),
+    createdAt: text("created_at").notNull(),
+    updatedAt: text("updated_at").notNull(),
+  },
+  (table) => [
+    index("sales_contracts_status_idx").on(
+      table.workspaceId,
+      table.status,
+      table.endDate,
+    ),
+    index("sales_contracts_owner_idx").on(table.ownerId, table.status),
+  ],
+);
+
 export const routines = sqliteTable(
   "routines",
   {

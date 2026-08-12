@@ -14,6 +14,7 @@ import {
   ChevronDown,
   ChevronRight,
   CircleDashed,
+  CircleDollarSign,
   ClipboardList,
   Clock3,
   Edit3,
@@ -63,8 +64,9 @@ import type {
   TaskStatus,
   Team,
 } from "./lib/types";
+import { CommercialView } from "./commercial-view";
 
-type View = "dashboard" | "tasks" | "clients" | "team" | "routines" | "archive";
+type View = "dashboard" | "tasks" | "clients" | "sales" | "team" | "routines" | "archive";
 type ModalName = "task" | "client" | "deactivate_client" | "member" | "team" | "routine" | null;
 type ActionPayload = Record<string, unknown> & { action: string };
 
@@ -76,6 +78,7 @@ const navItems: Array<{
   { id: "dashboard", label: "Visão geral", icon: LayoutDashboard },
   { id: "tasks", label: "Minhas demandas", icon: ClipboardList },
   { id: "clients", label: "Clientes", icon: Building2 },
+  { id: "sales", label: "Comercial & Vendas", icon: CircleDollarSign },
   { id: "team", label: "Equipe", icon: Users },
   { id: "routines", label: "Rotinas", icon: Repeat2 },
   { id: "archive", label: "Arquivo", icon: Archive },
@@ -415,6 +418,15 @@ export function AgencyApp() {
                 setEditingTask(null);
                 setModal("task");
               }}
+            />
+          )}
+          {view === "sales" && (
+            <CommercialView
+              canManage={canManage}
+              data={data}
+              onAction={runAction}
+              search={search}
+              working={working}
             />
           )}
           {view === "team" && (

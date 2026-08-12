@@ -15,6 +15,13 @@
       "when": 1786449082275,
       "tag": "0001_ambitious_lilith",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1786530127795,
+      "tag": "0002_sweet_micromacro",
+      "breakpoints": true
     }
   ]
 }
